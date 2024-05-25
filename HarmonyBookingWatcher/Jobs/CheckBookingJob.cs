@@ -29,15 +29,25 @@ public class CheckBookingJob :IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
+        _logger.LogWarning("Вход...");
         HttpContent content = GetContent();
-        var response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
-
+        HttpResponseMessage response;
+        try
+        {
+            response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+            return;
+        }
         var responseString = await response.Content.ReadAsStringAsync();
 
         var currentBooking = JsonConvert.DeserializeObject<HarmonyBookingDto>(responseString);
 
         if (currentBooking == null)
         {
+            _logger.LogError("Нет ответа от сервера");
             await SendMessage("Нет ответа от сервера");
             return;
         }
