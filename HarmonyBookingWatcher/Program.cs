@@ -1,8 +1,18 @@
 using System.Net;
+using System.Reflection;
 using HarmonyBookingWatcher.Jobs;
 using Quartz;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Warning()
+    .WriteTo.File($"Logs/{Assembly.GetExecutingAssembly().GetName().Name}.log")
+    //.WriteTo.Console()
+    .CreateLogger();
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
 
 // Add services to the container.
 builder.Services.AddMemoryCache();
@@ -33,8 +43,8 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-var loggerFactory = app.Services.GetService<ILoggerFactory>();
-loggerFactory.AddFile(builder.Configuration["Logging:LogFilePath"].ToString()); 
+//var loggerFactory = app.Services.GetService<ILoggerFactory>();
+//loggerFactory.AddFile(builder.Configuration["Logging:LogFilePath"].ToString()); 
 
 // app.UseHttpsRedirection();
 //

@@ -29,7 +29,6 @@ public class CheckBookingJob :IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-
         HttpContent content = GetContent();
         var response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
 
@@ -80,7 +79,7 @@ public class CheckBookingJob :IJob
             return;
         }
         
-        Console.WriteLine($"Изменений нет на {_now}");
+        _logger.LogWarning($"Изменений нет на {_now}");
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -139,7 +138,7 @@ public class CheckBookingJob :IJob
             _haveChanges = true;
         }
 
-        Console.WriteLine("Найдены изменения");
+        _logger.LogWarning("Найдены изменения");
     }
 
     private string ToDate(string dateStr)
