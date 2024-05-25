@@ -9,15 +9,20 @@ namespace HarmonyBookingWatcher.Jobs;
 
 public class CheckBookingJob :IJob
 {
-    private static readonly HttpClient client = new HttpClient();
-    private const string cacheKey = "harmonyBooking";
-    private IMemoryCache _cache;
+    private static readonly HttpClient Client = new HttpClient();
+    private const string CacheKey = "harmonyBooking";
+    private readonly IMemoryCache _cache;
     private bool _haveChanges;
-    private DateTime _now;
+    private readonly DateTime _now;
+    private readonly ILogger<CheckBookingJob> _logger;
 
-    public CheckBookingJob(IMemoryCache cache)
+
+    public CheckBookingJob(
+        IMemoryCache cache,
+        ILogger<CheckBookingJob> logger)
     {
         _cache = cache;
+        _logger = logger;
         _now = DateTime.Now.TimeOfDay < new TimeSpan(21, 30,00)
             ? DateTime.Now : DateTime.Now.AddDays(1);
     }
@@ -26,7 +31,7 @@ public class CheckBookingJob :IJob
     {
 
         HttpContent content = GetContent();
-        var response = await client.PostAsync("https://harmony.cab/v1/api/get", content);
+        var response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
 
         var responseString = await response.Content.ReadAsStringAsync();
 
@@ -38,7 +43,7 @@ public class CheckBookingJob :IJob
             return;
         }
 
-        if (_cache.TryGetValue(cacheKey, out HarmonyBookingDto buffer))
+        if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
         {
             Console.WriteLine("Booking found in cache.");
             
@@ -85,9 +90,9 @@ public class CheckBookingJob :IJob
             .SetAbsoluteExpiration(TimeSpan.FromSeconds(360000))
             .SetPriority(CacheItemPriority.Normal)
             .SetSize(1024);
-        _cache.Remove(cacheKey);
+        _cache.Remove(CacheKey);
         currentBooking.SetDate(_now);
-        _cache.Set(cacheKey, currentBooking, cacheEntryOptions);
+        _cache.Set(CacheKey, currentBooking, cacheEntryOptions);
         Console.WriteLine($"Cache updated");
     }
 

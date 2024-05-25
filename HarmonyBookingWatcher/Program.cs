@@ -1,5 +1,4 @@
 using System.Net;
-using HarmonyBookingWatcher.Dto;
 using HarmonyBookingWatcher.Jobs;
 using Quartz;
 
@@ -22,7 +21,6 @@ builder.Services.AddQuartz(q =>
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-builder.Services.AddSingleton<HarmonyBookingDto>();
 
 builder.WebHost.UseKestrel(so =>
 {
@@ -35,10 +33,12 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+var loggerFactory = app.Services.GetService<ILoggerFactory>();
+loggerFactory.AddFile(builder.Configuration["Logging:LogFilePath"].ToString()); 
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+// app.UseHttpsRedirection();
+//
+// app.UseAuthorization();
 
 app.MapControllers();
 

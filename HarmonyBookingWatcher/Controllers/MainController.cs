@@ -9,7 +9,6 @@ namespace HarmonyBookingWatcher.Controllers;
 [Route("[controller]")]
 public class MainController : ControllerBase
 {
-
     public MainController() { }
 
     [HttpGet]
