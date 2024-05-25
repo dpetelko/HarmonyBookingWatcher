@@ -44,11 +44,11 @@ public class CheckBookingJob :IJob
 
         if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
         {
-            Console.WriteLine("Booking found in cache.");
+            _logger.LogInformation("Booking found in cache.");
             
             if (buffer.GetBookingDate() != _now.Date)
             {
-                Console.WriteLine("Booking is outdated.");
+                _logger.LogInformation("Booking is outdated.");
                 
                 UpdateCache(currentBooking);
                 return;
@@ -56,7 +56,7 @@ public class CheckBookingJob :IJob
         }
         else
         {
-            Console.WriteLine("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
+            _logger.LogInformation("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
 
             UpdateCache(currentBooking);
             return;
@@ -92,7 +92,7 @@ public class CheckBookingJob :IJob
         _cache.Remove(CacheKey);
         currentBooking.SetDate(_now);
         _cache.Set(CacheKey, currentBooking, cacheEntryOptions);
-        Console.WriteLine($"Cache updated");
+        _logger.LogInformation($"Cache updated");
     }
 
     private async Task CheckRoom(BookingData currentBookingData, BookingData bufferBookingData)
