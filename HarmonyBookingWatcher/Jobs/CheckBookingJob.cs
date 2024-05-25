@@ -34,6 +34,7 @@ public class CheckBookingJob :IJob
         HttpResponseMessage response;
         try
         {
+            _logger.LogWarning("Пробуем получить данные");
             response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
         }
         catch (Exception e)
@@ -51,6 +52,8 @@ public class CheckBookingJob :IJob
             await SendMessage("Нет ответа от сервера");
             return;
         }
+        
+        _logger.LogWarning("Данные успешно получены");
 
         if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
         {
@@ -89,7 +92,7 @@ public class CheckBookingJob :IJob
             return;
         }
         
-        _logger.LogWarning($"Изменений нет на {_now}");
+        _logger.LogWarning($"Изменений нет.");
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -180,6 +183,7 @@ public class CheckBookingJob :IJob
 
     private async Task SendMessage(string text)
     {
+        _logger.LogWarning($"Начало отправки сообщения");
         var client = new TelegramClient(21045577, "ffd2152e5271c5910495eeb813c8b1a5");
         await client.ConnectAsync();
         
@@ -226,6 +230,7 @@ public class CheckBookingJob :IJob
             new TLInputPeerChannel
                 { ChannelId = tlChannel.Id, AccessHash =(long)tlChannel.AccessHash },
             text);
+        _logger.LogWarning($"Сообщение отправлено");
     }
 
     private HttpContent GetContent()
