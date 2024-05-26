@@ -1,3 +1,4 @@
+using HarmonyBookingWatcher.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using TeleSharp.TL;
@@ -9,11 +10,17 @@ namespace HarmonyBookingWatcher.Controllers;
 [Route("[controller]")]
 public class MainController : ControllerBase
 {
-    public MainController() { }
+    private readonly IMessenger _messenger;
+    
+    public MainController(IMessenger messenger)
+    {
+        _messenger = messenger;
+    }
 
     [HttpGet]
     public async Task<ActionResult> Get()
     {
+        await _messenger.Send("Тестовое сообщение");
         return Ok("I'm OK");
     }
 }

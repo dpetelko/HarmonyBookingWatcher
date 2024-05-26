@@ -13,4 +13,8 @@
         <PackageReference Include="TLSharp" Version="0.1.0.574" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Logs" />
+    </ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
 using HarmonyBookingWatcher.Dto;
+using HarmonyBookingWatcher.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Quartz;
@@ -15,14 +16,16 @@ public class CheckBookingJob : IJob
     private bool _haveChanges;
     private readonly DateTime _now;
     private readonly ILogger<CheckBookingJob> _logger;
-
+    private readonly IMessenger _messenger;
 
     public CheckBookingJob(
         IMemoryCache cache,
-        ILogger<CheckBookingJob> logger)
+        ILogger<CheckBookingJob> logger,
+        IMessenger messenger)
     {
         _cache = cache;
         _logger = logger;
+        _messenger = messenger;
         _now = DateTime.Now.TimeOfDay < new TimeSpan(21, 30,00)
             ? DateTime.Now : DateTime.Now.AddDays(1);
     }
@@ -49,7 +52,7 @@ public class CheckBookingJob : IJob
         if (currentBooking?.Result?.BookingsData?.Office == null)
         {
             _logger.LogError("Нет ответа от сервера");
-            await SendMessage("Нет ответа от сервера");
+            await _messenger.Send("Нет ответа от сервера");
             return;
         }
         
@@ -141,13 +144,13 @@ public class CheckBookingJob : IJob
         }
         if (currentHalfTime != null && bufferHalfTime == null)
         {
-            await SendMessage($"Добавилась запись кабинет {currentHalfTime.Cabinet.Name} на время {ToDate(currentHalfTime.BeginAt)}");
+            await _messenger.Send($"Добавилась запись кабинет {currentHalfTime.Cabinet.Name} на время {ToDate(currentHalfTime.BeginAt)}");
             _haveChanges = true;
         }
         
         if (currentHalfTime == null && bufferHalfTime != null)
         {
-            await SendMessage($"Отменена запись кабинет {bufferHalfTime.Cabinet.Name} на время {ToDate(bufferHalfTime.BeginAt)}");
+            await _messenger.Send($"Отменена запись кабинет {bufferHalfTime.Cabinet.Name} на время {ToDate(bufferHalfTime.BeginAt)}");
             _haveChanges = true;
         }
 
@@ -179,58 +182,6 @@ public class CheckBookingJob : IJob
             12 => "декабря",
             _ => month.ToString()
         };
-    }
-
-    private async Task SendMessage(string text)
-    {
-        _logger.LogWarning($"Начало отправки сообщения");
-        var client = new TelegramClient(21045577, "ffd2152e5271c5910495eeb813c8b1a5");
-        await client.ConnectAsync();
-        
-        // var hash = await client.SendCodeRequestAsync("79622765272");
-        // var code = "26515"; // you can change code in debugger
-        //
-        // var user = await client.MakeAuthAsync("79622765272", hash, code);
-
-        // //get available contacts
-        // var result = await client.GetContactsAsync();
-        //
-        // //find recipient in contacts
-        // var user12 = result.Users
-        //     .Where(x => x.GetType() == typeof (TLUser))
-        //     .Cast<TLUser>()
-        //     .Select(x => x.Phone)
-        //     .ToList();
-        //
-        // Console.WriteLine(JsonConvert.SerializeObject(user12, Formatting.Indented));
-        //
-        // //find recipient in contacts
-        // var user1 = result.Users
-        //     .Where(x => x.GetType() == typeof (TLUser))
-        //     .Cast<TLUser>()
-        //     .FirstOrDefault(x => x.Phone == "79182182426");
-        //
-        // //send message
-        // await client.SendMessageAsync(new TLInputPeerUser() {UserId = user1.Id}, "Дима Петелько охуенный программист!!!");
-
-//Get dialogs
-        var dialogs = await client.GetUserDialogsAsync();
-
-//get user chats 
-        var chats = ((TeleSharp.TL.Messages.TLDialogsSlice)dialogs).Chats;
-
-//find channel by title
-        var tlChannel = chats
-            .Where(_=>_.GetType() == typeof(TLChannel))
-            .Select(_=>(TLChannel)_)
-            .FirstOrDefault(_ => _.Title.Contains("HarmonyKrasnodar"));
-        
-//send message
-        await client.SendMessageAsync(
-            new TLInputPeerChannel
-                { ChannelId = tlChannel.Id, AccessHash =(long)tlChannel.AccessHash },
-            text);
-        _logger.LogWarning($"Сообщение отправлено");
     }
 
     private HttpContent GetContent()

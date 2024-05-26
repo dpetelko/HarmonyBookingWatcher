@@ -1,6 +1,8 @@
 using System.Net;
 using System.Reflection;
 using HarmonyBookingWatcher.Jobs;
+using HarmonyBookingWatcher.Services.Implementations;
+using HarmonyBookingWatcher.Services.Interfaces;
 using Quartz;
 using Serilog;
 
@@ -31,7 +33,7 @@ builder.Services.AddQuartz(q =>
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-
+builder.Services.AddTransient<IMessenger, TelegramMessengerImpl>();
 builder.WebHost.UseKestrel(so =>
 {
     so.Limits.MaxConcurrentConnections = 100;
