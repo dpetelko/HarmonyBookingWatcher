@@ -20,7 +20,8 @@ public class MainController : ControllerBase
     [HttpGet]
     public async Task<ActionResult> Get()
     {
-        await _messenger.Send("Тестовое сообщение");
-        return Ok("I'm OK");
+        var now = DateTime.Now;
+        await _messenger.Send($"Приложение активно по состоянию {now}");
+        return Ok($"I'm OK - {now}");
     }
 }

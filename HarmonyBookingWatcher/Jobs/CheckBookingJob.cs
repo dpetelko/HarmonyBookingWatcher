@@ -30,12 +30,12 @@ public class CheckBookingJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        _logger.LogWarning("Вход...");
+        _logger.LogInformation("Вход...");
         HttpContent content = GetContent();
         HttpResponseMessage response;
         try
         {
-            _logger.LogWarning("Пробуем получить данные");
+            _logger.LogInformation("Пробуем получить данные");
             response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
         }
         catch (Exception e)
@@ -54,7 +54,7 @@ public class CheckBookingJob : IJob
             return;
         }
         
-        _logger.LogWarning("Данные успешно получены");
+        _logger.LogInformation("Данные успешно получены");
 
         if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
         {
@@ -93,7 +93,7 @@ public class CheckBookingJob : IJob
             return;
         }
         
-        _logger.LogWarning($"Изменений нет.");
+        _logger.LogInformation($"Изменений нет.");
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -152,7 +152,7 @@ public class CheckBookingJob : IJob
             _haveChanges = true;
         }
 
-        _logger.LogWarning("Найдены изменения");
+        _logger.LogInformation("Найдены изменения");
     }
 
     private string ToDate(string? dateStr)
