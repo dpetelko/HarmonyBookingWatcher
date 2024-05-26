@@ -7,9 +7,9 @@ using TLSharp.Core;
 
 namespace HarmonyBookingWatcher.Jobs;
 
-public class CheckBookingJob :IJob
+public class CheckBookingJob : IJob
 {
-    private static readonly HttpClient Client = new HttpClient();
+    private static readonly HttpClient Client = new ();
     private const string CacheKey = "harmonyBooking";
     private readonly IMemoryCache _cache;
     private bool _haveChanges;
@@ -46,7 +46,7 @@ public class CheckBookingJob :IJob
 
         var currentBooking = JsonConvert.DeserializeObject<HarmonyBookingDto>(responseString);
 
-        if (currentBooking == null)
+        if (currentBooking?.Result?.BookingsData?.Office == null)
         {
             _logger.LogError("Нет ответа от сервера");
             await SendMessage("Нет ответа от сервера");

@@ -1,7 +1,6 @@
 using Newtonsoft.Json;
 
 namespace HarmonyBookingWatcher.Dto;
-// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
 
 public class HalfTime
 {
@@ -36,7 +35,7 @@ public class Hour
 
 public class BookingsData
 {
-    [JsonProperty("40")] public Office Office;
+    [JsonProperty("40")] public Office? Office;
 }
 
 public class BookingData
@@ -77,7 +76,7 @@ public class Cabinet
 
 public class Result
 {
-    [JsonProperty("bookingsData")] public BookingsData BookingsData;
+    [JsonProperty("bookingsData")] public BookingsData? BookingsData;
     public DateTime? BookingDate;
 }
 
@@ -85,7 +84,7 @@ public class HarmonyBookingDto
 {
     [JsonProperty("isOK")] public bool? IsOK;
 
-    [JsonProperty("result")] public Result Result;
+    [JsonProperty("result")] public Result? Result;
 
     public void SetDate(DateTime date)
     {
