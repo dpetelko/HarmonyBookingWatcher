@@ -56,6 +56,18 @@ public class TelegramMessengerImpl : IMessenger
             .Where(_=>_.GetType() == typeof(TLChannel))
             .Select(_=>(TLChannel)_)
             .FirstOrDefault(_ => _.Title.Contains("HarmonyKrasnodar"));
+
+        if (tlChannel == null)
+        {
+            _logger.LogError("Канал HarmonyKrasnodar не найден");
+            return;
+        }
+        
+        if (tlChannel.AccessHash == null)
+        {
+            _logger.LogError("AccessHash для канала HarmonyKrasnodar не найден");
+            return;
+        }
         
 //send message
         await client.SendMessageAsync(

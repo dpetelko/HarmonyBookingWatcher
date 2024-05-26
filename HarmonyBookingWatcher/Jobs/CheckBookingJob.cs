@@ -3,8 +3,6 @@ using HarmonyBookingWatcher.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Quartz;
-using TeleSharp.TL;
-using TLSharp.Core;
 
 namespace HarmonyBookingWatcher.Jobs;
 
@@ -79,14 +77,14 @@ public class CheckBookingJob : IJob
         }
         
         var currentOffice = currentBooking.Result.BookingsData.Office;
-        var bufferOffice = buffer.Result.BookingsData.Office;
-        await CheckRoom(currentOffice.BookingData171, bufferOffice.BookingData171);
-        await CheckRoom(currentOffice.BookingData172, bufferOffice.BookingData172);
-        await CheckRoom(currentOffice.BookingData173, bufferOffice.BookingData173);
-        await CheckRoom(currentOffice.BookingData189, bufferOffice.BookingData189);
-        await CheckRoom(currentOffice.BookingData190, bufferOffice.BookingData190);
-        await CheckRoom(currentOffice.BookingData191, bufferOffice.BookingData191);
-        await CheckRoom(currentOffice.BookingData205, bufferOffice.BookingData205);
+        var bufferOffice = buffer.Result?.BookingsData?.Office;
+        await CheckRoom(currentOffice?.BookingData171, bufferOffice?.BookingData171);
+        await CheckRoom(currentOffice?.BookingData172, bufferOffice?.BookingData172);
+        await CheckRoom(currentOffice?.BookingData173, bufferOffice?.BookingData173);
+        await CheckRoom(currentOffice?.BookingData189, bufferOffice?.BookingData189);
+        await CheckRoom(currentOffice?.BookingData190, bufferOffice?.BookingData190);
+        await CheckRoom(currentOffice?.BookingData191, bufferOffice?.BookingData191);
+        await CheckRoom(currentOffice?.BookingData205, bufferOffice?.BookingData205);
 
 
         if (_haveChanges)
@@ -111,7 +109,7 @@ public class CheckBookingJob : IJob
         _logger.LogInformation($"Cache updated");
     }
 
-    private async Task CheckRoom(BookingData currentBookingData, BookingData bufferBookingData)
+    private async Task CheckRoom(BookingData? currentBookingData, BookingData? bufferBookingData)
     {
         await CheckHour(currentBookingData?.Hour8, bufferBookingData?.Hour8);
         await CheckHour(currentBookingData?.Hour9, bufferBookingData?.Hour9);
@@ -144,27 +142,28 @@ public class CheckBookingJob : IJob
         }
         if (currentHalfTime != null && bufferHalfTime == null)
         {
-            await _messenger.Send($"Добавилась запись кабинет {currentHalfTime.Cabinet.Name} на время {ToDate(currentHalfTime.BeginAt)}");
+            await _messenger.Send($"Добавилась запись кабинет {currentHalfTime.Cabinet?.Name} на время {ToDate(currentHalfTime.BeginAt)}");
             _haveChanges = true;
         }
         
         if (currentHalfTime == null && bufferHalfTime != null)
         {
-            await _messenger.Send($"Отменена запись кабинет {bufferHalfTime.Cabinet.Name} на время {ToDate(bufferHalfTime.BeginAt)}");
+            await _messenger.Send($"Отменена запись кабинет {bufferHalfTime.Cabinet?.Name} на время {ToDate(bufferHalfTime.BeginAt)}");
             _haveChanges = true;
         }
 
         _logger.LogWarning("Найдены изменения");
     }
 
-    private string ToDate(string dateStr)
+    private string ToDate(string? dateStr)
     {
+        if (string.IsNullOrEmpty(dateStr)) return "Дата не задана";
         var date = Convert.ToDateTime(dateStr);
-        string month = GetMonthName(date.Month);
+        var month = GetMonthName(date.Month);
         return $"{date.TimeOfDay.ToString(@"hh\:mm")} {date.Day} {month}";
     }
 
-    private string GetMonthName(int month)
+    private static string GetMonthName(int month)
     {
         return month switch
         {
