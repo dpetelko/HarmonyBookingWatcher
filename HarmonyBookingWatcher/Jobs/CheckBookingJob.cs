@@ -24,8 +24,8 @@ public class CheckBookingJob : IJob
         _cache = cache;
         _logger = logger;
         _messenger = messenger;
-        _now = DateTime.Now.TimeOfDay < new TimeSpan(21, 30,00)
-            ? DateTime.Now : DateTime.Now.AddDays(1);
+        _now = DateTime.UtcNow.TimeOfDay < new TimeSpan(18, 30,00)
+            ? DateTime.UtcNow.Date : DateTime.UtcNow.AddDays(1).Date;
     }
 
     public async Task Execute(IJobExecutionContext context)
