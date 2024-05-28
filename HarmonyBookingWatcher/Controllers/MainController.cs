@@ -20,8 +20,8 @@ public class MainController : ControllerBase
     [HttpGet]
     public async Task<ActionResult> Get()
     {
-        var now = DateTime.Now;
-        await _messenger.Send($"Приложение активно по состоянию {now}");
+        var now = DateTime.Now.AddHours(3);
+        await _messenger.Send($"Приложение активно по состоянию на {now}");
         return Ok($"I'm OK - {now}");
     }
 }
