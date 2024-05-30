@@ -142,7 +142,7 @@ public class CheckBookingJob : IJob
         }
         if (currentHalfTime != null && bufferHalfTime == null)
         {
-            await _messenger.Send($"Добавилась запись кабинет {currentHalfTime.Cabinet?.Name} на время {ToDate(currentHalfTime.BeginAt)}");
+            await _messenger.Send($"Добавилась запись кабинет *{currentHalfTime.Cabinet?.Name}* на время *{ToDate(currentHalfTime.BeginAt)}*");
             _haveChanges = true;
         }
         

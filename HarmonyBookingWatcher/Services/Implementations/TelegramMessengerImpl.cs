@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using HarmonyBookingWatcher.Services.Interfaces;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 using TeleSharp.TL;
 using TLSharp.Core;
 
@@ -21,8 +22,12 @@ public class TelegramMessengerImpl : IMessenger
         _logger.LogWarning($"Начало отправки сообщения");
         
         
-        var Bot = new Telegram.Bot.TelegramBotClient("7413747352:AAFi-qdowWJ76QSrIzXI9D4d7AVU--jwIFU"); 
-        await Bot.SendTextMessageAsync(-1002005329889, message);
+        var bot = new Telegram.Bot.TelegramBotClient("7413747352:AAFi-qdowWJ76QSrIzXI9D4d7AVU--jwIFU"); 
+        await bot.SendTextMessageAsync(
+            -1002005329889,
+            message,
+            default,
+            ParseMode.MarkdownV2);
         return;
         
         string retval = string.Empty;
