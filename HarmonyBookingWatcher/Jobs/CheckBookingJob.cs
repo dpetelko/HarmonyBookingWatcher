@@ -142,13 +142,13 @@ public class CheckBookingJob : IJob
         }
         if (currentHalfTime != null && bufferHalfTime == null)
         {
-            await _messenger.Send($"Добавилась запись кабинет *{currentHalfTime.Cabinet?.Name}* на время {ToDate(currentHalfTime.BeginAt)}");
+            await _messenger.Send($"\U00002705 {currentHalfTime.Cabinet?.Name} {ToDate(currentHalfTime.BeginAt)}");
             _haveChanges = true;
         }
         
         if (currentHalfTime == null && bufferHalfTime != null)
         {
-            await _messenger.Send($"Отменена запись кабинет *{bufferHalfTime.Cabinet?.Name}* на время {ToDate(bufferHalfTime.BeginAt)}");
+            await _messenger.Send($"\U0000274C {bufferHalfTime.Cabinet?.Name} {ToDate(bufferHalfTime.BeginAt)}");
             _haveChanges = true;
         }
 

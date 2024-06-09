@@ -21,7 +21,7 @@ public class MainController : ControllerBase
     public async Task<ActionResult> Get()
     {
         var now = DateTime.UtcNow.AddHours(3);
-        var msg = $"Приложение *активно* по состоянию на {now:F}".Replace("г.", "года");
+        var msg = $"\U0000270C {now:F}".Replace("г.", "года");
         Console.WriteLine(msg);
         await _messenger.Send(msg);
         return Ok($"I'm OK - {now}");
