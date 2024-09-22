@@ -85,6 +85,8 @@ public class CheckBookingJob : IJob
         await CheckRoom(currentOffice?.BookingData190, bufferOffice?.BookingData190);
         await CheckRoom(currentOffice?.BookingData191, bufferOffice?.BookingData191);
         await CheckRoom(currentOffice?.BookingData205, bufferOffice?.BookingData205);
+        await CheckRoom(currentOffice?.BookingData211, bufferOffice?.BookingData211);
+        await CheckRoom(currentOffice?.BookingData213, bufferOffice?.BookingData213);
 
 
         if (_haveChanges)
