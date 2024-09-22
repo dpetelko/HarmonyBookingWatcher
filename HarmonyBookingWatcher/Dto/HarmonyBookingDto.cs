@@ -24,6 +24,12 @@ public class Office
     [JsonProperty("190")] public BookingData? BookingData190;
 
     [JsonProperty("191")] public BookingData? BookingData191;
+    
+    [JsonProperty("211")] public BookingData? BookingData211;
+
+    [JsonProperty("213")] public BookingData? BookingData213;
+    
+    
 }
 
 public class Hour

@@ -30,12 +30,12 @@ public class CheckBookingJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        _logger.LogWarning("Вход...");
+        _logger.LogInformation("Вход...");
         HttpContent content = GetContent();
         HttpResponseMessage response;
         try
         {
-            _logger.LogWarning("Пробуем получить данные");
+            _logger.LogInformation("Пробуем получить данные");
             response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
         }
         catch (Exception e)
@@ -62,7 +62,7 @@ public class CheckBookingJob : IJob
             
             if (buffer.GetBookingDate() != _now.Date)
             {
-                _logger.LogWarning("Booking is outdated.");
+                _logger.LogInformation("Booking is outdated.");
                 
                 UpdateCache(currentBooking);
                 return;
@@ -70,7 +70,7 @@ public class CheckBookingJob : IJob
         }
         else
         {
-            _logger.LogWarning("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
+            _logger.LogInformation("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
 
             UpdateCache(currentBooking);
             return;
@@ -93,7 +93,7 @@ public class CheckBookingJob : IJob
             return;
         }
         
-        _logger.LogWarning($"Изменений нет.");
+        _logger.LogInformation($"Изменений нет.");
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -106,7 +106,7 @@ public class CheckBookingJob : IJob
         _cache.Remove(CacheKey);
         currentBooking.SetDate(_now);
         _cache.Set(CacheKey, currentBooking, cacheEntryOptions);
-        _logger.LogWarning($"Cache updated");
+        _logger.LogInformation($"Cache updated");
     }
 
     private async Task CheckRoom(BookingData? currentBookingData, BookingData? bufferBookingData)

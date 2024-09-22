@@ -28,7 +28,7 @@ builder.Services.AddQuartz(q =>
         .ForJob(jobKey)
         .WithIdentity("CheckBookingJob-trigger")
         //This Cron interval can be described as "run every minute" (when second is zero)
-        .WithCronSchedule("0 * * ? * *")
+        .WithCronSchedule("0 0/5 * * * ?")
     );
 });
 
