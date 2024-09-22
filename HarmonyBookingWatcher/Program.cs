@@ -9,7 +9,7 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Warning()
+    .MinimumLevel.Information()
     .WriteTo.File($"Logs/{Assembly.GetExecutingAssembly().GetName().Name}.log")
     //.WriteTo.Console()
     .CreateLogger();
@@ -18,22 +18,37 @@ builder.Logging.AddSerilog();
 
 // Add services to the container.
 builder.Services.AddMemoryCache();
+builder.Services.AddTransient<IContentGetter, ContentGetter>();
+builder.Services.AddTransient<IMessenger, TelegramMessengerImpl>();
+builder.Services.AddTransient<IRoomChecker, DailyRoomCheckerImpl>();
+builder.Services.AddTransient<IContentGetter, ContentGetter>();
 builder.Services.AddQuartz(q =>
 {
     // Just use the name of your job that you created in the Jobs folder.
     var jobKey = new JobKey("CheckBookingJob");
-    q.AddJob<CheckBookingJob>(opts => opts.WithIdentity(jobKey));
+    q.AddJob<CheckDailyBookingJob>(opts => opts.WithIdentity(jobKey));
     
     q.AddTrigger(opts => opts
         .ForJob(jobKey)
-        .WithIdentity("CheckBookingJob-trigger")
+        .WithIdentity("CheckDailyBookingJob-trigger")
         //This Cron interval can be described as "run every minute" (when second is zero)
         .WithCronSchedule("0 * * ? * *")
+    );
+    
+    var jobKey2 = new JobKey("CheckMonthlyBookingJob");
+    q.AddJob<CheckMonthlyBookingJob>(opts => opts.WithIdentity(jobKey2));
+    
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey2)
+        .WithIdentity("CheckMonthlyBookingJob-trigger")
+        //This Cron interval can be described as "run every hour" (when second is zero)
+        // .WithCronSchedule("0 0 0 ? * * *")
+        .WithCronSchedule("0 * * ? * *")
+
     );
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-builder.Services.AddTransient<IMessenger, TelegramMessengerImpl>();
 builder.WebHost.UseKestrel(so =>
 {
     so.Limits.MaxConcurrentConnections = 100;

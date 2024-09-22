@@ -1,83 +1,27 @@
+using System.Reflection.PortableExecutable;
 using HarmonyBookingWatcher.Dto;
 using HarmonyBookingWatcher.Services.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
-using Quartz;
 
-namespace HarmonyBookingWatcher.Jobs;
+namespace HarmonyBookingWatcher.Services.Implementations;
 
-public class CheckBookingJob : IJob
+public class DailyRoomCheckerImpl : IDailyRoomChecker
 {
-    private static readonly HttpClient Client = new ();
-    private const string CacheKey = "harmonyBooking";
-    private readonly IMemoryCache _cache;
     private bool _haveChanges;
-    private readonly DateTime _now;
-    private readonly ILogger<CheckBookingJob> _logger;
     private readonly IMessenger _messenger;
+    private readonly ILogger<DailyRoomCheckerImpl> _logger;
 
-    public CheckBookingJob(
-        IMemoryCache cache,
-        ILogger<CheckBookingJob> logger,
-        IMessenger messenger)
+    public DailyRoomCheckerImpl(
+        IMessenger messenger,
+        ILogger<DailyRoomCheckerImpl> logger)
     {
-        _cache = cache;
-        _logger = logger;
         _messenger = messenger;
-        _now = DateTime.UtcNow.TimeOfDay < new TimeSpan(18, 30,00)
-            ? DateTime.UtcNow.Date : DateTime.UtcNow.AddDays(1).Date;
+        _logger = logger;
     }
 
-    public async Task Execute(IJobExecutionContext context)
+    public async Task<bool> CheckDate(Result? currentBooking, Result? buffer)
     {
-        _logger.LogInformation("Вход...");
-        HttpContent content = GetContent();
-        HttpResponseMessage response;
-        try
-        {
-            _logger.LogInformation("Пробуем получить данные");
-            response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e.Message);
-            return;
-        }
-        var responseString = await response.Content.ReadAsStringAsync();
-
-        var currentBooking = JsonConvert.DeserializeObject<HarmonyBookingDto>(responseString);
-
-        if (currentBooking?.Result?.BookingsData?.Office == null)
-        {
-            _logger.LogError("Нет ответа от сервера");
-            await _messenger.Send("Нет ответа от сервера");
-            return;
-        }
-        
-        _logger.LogInformation("Данные успешно получены");
-
-        if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
-        {
-            _logger.LogInformation("Booking found in cache.");
-            
-            if (buffer.GetBookingDate() != _now.Date)
-            {
-                _logger.LogInformation("Booking is outdated.");
-                
-                UpdateCache(currentBooking);
-                return;
-            }
-        }
-        else
-        {
-            _logger.LogInformation("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
-
-            UpdateCache(currentBooking);
-            return;
-        }
-        
-        var currentOffice = currentBooking.Result.BookingsData.Office;
-        var bufferOffice = buffer.Result?.BookingsData?.Office;
+        var currentOffice = currentBooking?.BookingsData?.Office;
+        var bufferOffice = buffer?.BookingsData?.Office;
         await CheckRoom(currentOffice?.BookingData171, bufferOffice?.BookingData171);
         await CheckRoom(currentOffice?.BookingData172, bufferOffice?.BookingData172);
         await CheckRoom(currentOffice?.BookingData173, bufferOffice?.BookingData173);
@@ -85,31 +29,11 @@ public class CheckBookingJob : IJob
         await CheckRoom(currentOffice?.BookingData190, bufferOffice?.BookingData190);
         await CheckRoom(currentOffice?.BookingData191, bufferOffice?.BookingData191);
         await CheckRoom(currentOffice?.BookingData205, bufferOffice?.BookingData205);
-
-
-        if (_haveChanges)
-        {
-            UpdateCache(currentBooking);
-            return;
-        }
         
-        _logger.LogInformation($"Изменений нет.");
+        return _haveChanges;
     }
 
-    private void UpdateCache(HarmonyBookingDto currentBooking)
-    {
-        var cacheEntryOptions = new MemoryCacheEntryOptions()
-            .SetSlidingExpiration(TimeSpan.FromSeconds(6000))
-            .SetAbsoluteExpiration(TimeSpan.FromSeconds(360000))
-            .SetPriority(CacheItemPriority.Normal)
-            .SetSize(1024);
-        _cache.Remove(CacheKey);
-        currentBooking.SetDate(_now);
-        _cache.Set(CacheKey, currentBooking, cacheEntryOptions);
-        _logger.LogInformation($"Cache updated");
-    }
-
-    private async Task CheckRoom(BookingData? currentBookingData, BookingData? bufferBookingData)
+    public async Task CheckRoom(BookingData? currentBookingData, BookingData? bufferBookingData)
     {
         await CheckHour(currentBookingData?.Hour8, bufferBookingData?.Hour8);
         await CheckHour(currentBookingData?.Hour9, bufferBookingData?.Hour9);
@@ -140,12 +64,13 @@ public class CheckBookingJob : IJob
         {
             return;
         }
+
         if (currentHalfTime != null && bufferHalfTime == null)
         {
             await _messenger.Send($"\U00002705 {currentHalfTime.Cabinet?.Name} {ToDate(currentHalfTime.BeginAt)}");
             _haveChanges = true;
         }
-        
+
         if (currentHalfTime == null && bufferHalfTime != null)
         {
             await _messenger.Send($"\U0000274C {bufferHalfTime.Cabinet?.Name} {ToDate(bufferHalfTime.BeginAt)}");
@@ -155,7 +80,7 @@ public class CheckBookingJob : IJob
         _logger.LogInformation("Найдены изменения");
     }
 
-    private string ToDate(string? dateStr)
+    private static string ToDate(string? dateStr)
     {
         if (string.IsNullOrEmpty(dateStr)) return "Дата не задана";
         var date = Convert.ToDateTime(dateStr);
@@ -181,14 +106,5 @@ public class CheckBookingJob : IJob
             12 => "декабря",
             _ => month.ToString()
         };
-    }
-
-    private HttpContent GetContent()
-    {
-        HarmonyRequestDto values = new(40, _now.Date.ToString("yyyy-MM-dd"));
-        HttpContent content = JsonContent.Create(values);
-        content.Headers.Add("Cookie",
-            "current_city=226a37df7de576bca6a52dae7a442ad91dc87b20d43a95878c175a5fa19eeeb2a%3A2%3A%7Bi%3A0%3Bs%3A12%3A%22current_city%22%3Bi%3A1%3Bs%3A9%3A%22krasnodar%22%3B%7D; ");
-        return content;
     }
 }

@@ -76,12 +76,33 @@ public class Cabinet
 
 public class Result
 {
+    [JsonConstructor]
+    public Result(BookingsData? bookingsData, DateTime? bookingDate)
+    {
+        BookingsData = bookingsData;
+        BookingDate = bookingDate;
+    }
+
+    public Result(DateTime? bookingDate)
+    {
+        BookingDate = bookingDate;
+    }
+
     [JsonProperty("bookingsData")] public BookingsData? BookingsData;
     public DateTime? BookingDate;
 }
 
 public class HarmonyBookingDto
 {
+    [JsonConstructor]
+    public HarmonyBookingDto(
+        bool? isOk,
+        Result? result)
+    {
+        IsOK = isOk;
+        Result = result;
+    }
+
     [JsonProperty("isOK")] public bool? IsOK;
 
     [JsonProperty("result")] public Result? Result;
