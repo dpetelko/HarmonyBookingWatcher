@@ -30,12 +30,12 @@ public class CheckBookingJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
-        _logger.LogInformation("Вход...");
+        _logger.LogWarning("Вход...");
         HttpContent content = GetContent();
         HttpResponseMessage response;
         try
         {
-            _logger.LogInformation("Пробуем получить данные");
+            _logger.LogWarning("Пробуем получить данные");
             response = await Client.PostAsync("https://harmony.cab/v1/api/get", content);
         }
         catch (Exception e)
@@ -54,7 +54,7 @@ public class CheckBookingJob : IJob
             return;
         }
         
-        _logger.LogInformation("Данные успешно получены");
+        _logger.LogWarning("Данные успешно получены");
 
         if (_cache.TryGetValue(CacheKey, out HarmonyBookingDto buffer))
         {
@@ -62,7 +62,7 @@ public class CheckBookingJob : IJob
             
             if (buffer.GetBookingDate() != _now.Date)
             {
-                _logger.LogInformation("Booking is outdated.");
+                _logger.LogWarning("Booking is outdated.");
                 
                 UpdateCache(currentBooking);
                 return;
@@ -70,7 +70,7 @@ public class CheckBookingJob : IJob
         }
         else
         {
-            _logger.LogInformation("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
+            _logger.LogWarning("Booking not found in cache. Fetching from harmony.cub/krasnodar.");
 
             UpdateCache(currentBooking);
             return;
@@ -93,7 +93,7 @@ public class CheckBookingJob : IJob
             return;
         }
         
-        _logger.LogInformation($"Изменений нет.");
+        _logger.LogWarning($"Изменений нет.");
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -106,7 +106,7 @@ public class CheckBookingJob : IJob
         _cache.Remove(CacheKey);
         currentBooking.SetDate(_now);
         _cache.Set(CacheKey, currentBooking, cacheEntryOptions);
-        _logger.LogInformation($"Cache updated");
+        _logger.LogWarning($"Cache updated");
     }
 
     private async Task CheckRoom(BookingData? currentBookingData, BookingData? bufferBookingData)
