@@ -19,6 +19,7 @@ public class TelegramMessengerImpl : IMessenger
 
     public async Task Send(string message)
     {
+        await Task.Delay(2000);
         _logger.LogWarning($"Начало отправки сообщения");
         
         
