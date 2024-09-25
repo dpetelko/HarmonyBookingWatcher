@@ -3,6 +3,7 @@ using HarmonyBookingWatcher.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Quartz;
+using TeleSharp.TL;
 
 namespace HarmonyBookingWatcher.Jobs;
 
@@ -15,6 +16,7 @@ public class CheckBookingJob : IJob
     private readonly DateTime _now;
     private readonly ILogger<CheckBookingJob> _logger;
     private readonly IMessenger _messenger;
+    private List<string> _messages = new();
 
     public CheckBookingJob(
         IMemoryCache cache,
@@ -92,10 +94,19 @@ public class CheckBookingJob : IJob
         if (_haveChanges)
         {
             UpdateCache(currentBooking);
+            await SendMessages();
             return;
         }
         
         _logger.LogInformation($"Изменений нет.");
+    }
+
+    private async Task SendMessages()
+    {
+        foreach (var message in _messages)
+        {
+            await _messenger.Send(message);
+        }
     }
 
     private void UpdateCache(HarmonyBookingDto currentBooking)
@@ -144,13 +155,13 @@ public class CheckBookingJob : IJob
         }
         if (currentHalfTime != null && bufferHalfTime == null)
         {
-            await _messenger.Send($"\U00002705 {currentHalfTime.Cabinet?.Name} {ToDate(currentHalfTime.BeginAt)}");
+            _messages.Add($"\U00002705 {currentHalfTime.Cabinet?.Name} {ToDate(currentHalfTime.BeginAt)}");
             _haveChanges = true;
         }
         
         if (currentHalfTime == null && bufferHalfTime != null)
         {
-            await _messenger.Send($"\U0000274C {bufferHalfTime.Cabinet?.Name} {ToDate(bufferHalfTime.BeginAt)}");
+            _messages.Add($"\U0000274C {bufferHalfTime.Cabinet?.Name} {ToDate(bufferHalfTime.BeginAt)}");
             _haveChanges = true;
         }
 
