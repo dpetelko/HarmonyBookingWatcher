@@ -29,6 +29,8 @@ public class Office
 
     [JsonProperty("213")] public BookingData? BookingData213;
     
+    [JsonProperty("252")] public BookingData? BookingData252;
+    
     
 }
 
